@@ -1,3 +1,4 @@
 chart.zip
-chart/**
+chart/
 .DS_Store
+.vscode/

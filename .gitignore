@@ -2,3 +2,4 @@ chart.zip
 chart/
 .DS_Store
 .vscode/
+**/target/**

@@ -15,7 +15,7 @@ start_kafka:
 	helm install bitnami bitnami/kafka --version 31.0.0 -n orderbook --create-namespace -f helm/kafka-values.yaml
 
 stop_kafka:
-	helm uninstall --ignore-not-found bitnami
+	helm uninstall --ignore-not-found bitnami -n orderbook
 
 build_deps: # TODO: change to main branch after orderbook repo is clean
 	docker build https://github.com/AdrienLibert/orderbook.git#clean-repo-for-chart-only-purpose:src/kafka_init -t local/kafka-init
@@ -31,7 +31,7 @@ stop_flink_operator:
 
 start_deps: start_kafka start_flink_operator
 	helm install orderbook chart/ --namespace orderbook -f helm/orderbook-values.yaml
-	kubectl create secret generic postgres --from-literal=password=postgres --from-literal=postgres-password=postgres --dry-run -o yaml | kubectl apply -f -
+	kubectl create secret generic postgres -n analytics --from-literal=password=postgres --from-literal=postgres-password=postgres --dry-run -o yaml | kubectl apply -f -
 	helm install postgres bitnami/postgresql --version 16.5.6 -n analytics --create-namespace -f helm/postgres-values.yaml
 
 stop_deps: stop_kafka stop_flink_operator
@@ -39,3 +39,12 @@ stop_deps: stop_kafka stop_flink_operator
 	helm uninstall --ignore-not-found postgres -n analytics
 	kubectl delete --ignore-not-found pvc data-postgres-postgresql-0 -n analytics
 	kubectl delete --ignore-not-found secret postgres
+
+start_infra:
+	kubectl apply -f k8s/namespaces.yaml
+
+start: start_infra
+	kubectl apply -f k8s/candle-stick-job.yaml
+
+stop:
+	kubectl delete -f k8s/candle-stick-job.yaml
